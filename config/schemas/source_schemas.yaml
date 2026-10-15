@@ -1,0 +1,110 @@
+
+retailmax:
+  customers:
+    customer_id: string
+    first_name: string
+    last_name: string
+    email: string
+    phone: string
+    city: string
+    state: string
+    created_at: string
+
+  products:
+    product_id: string
+    product_name: string
+    category: string
+    brand: string
+    unit_price: decimal
+    supplier_id: string
+    created_at: string
+
+  stores:
+    store_id: string
+    store_name: string
+    city: string
+    state: string
+    zip_code: string
+    opened_date: string
+
+  sales:
+    transaction_id: string
+    customer_id: string
+    product_id: string
+    store_id: string
+    transaction_date: string
+    quantity: integer
+    unit_price: decimal
+    discount_amount: decimal
+    total_amount: decimal
+
+  inventory:
+    inventory_id: string
+    product_id: string
+    store_id: string
+    stock_quantity: integer
+    reorder_level: integer
+    last_updated: string
+
+  suppliers:
+    supplier_id: string
+    supplier_name: string
+    contact_email: string
+    phone: string
+    city: string
+    state: string
+
+freshmart:
+  customers:
+    cust_no: string
+    fname: string
+    lname: string
+    email_address: string
+    mobile_no: string
+    city_name: string
+    state_code: string
+    signup_date: string
+
+  products:
+    sku_code: string
+    item_description: string
+    department: string
+    brand_name: string
+    selling_price: decimal
+    vendor_code: string
+    listed_date: string
+
+  stores:
+    location_code: string
+    location_name: string
+    city_name: string
+    state_code: string
+    postal_code: string
+    launch_date: string
+
+  sales:
+    receipt_no: string
+    cust_no: string
+    sku_code: string
+    location_code: string
+    sale_date: string
+    units_sold: integer
+    price_per_unit: decimal
+    discount_value: decimal
+    net_sales: decimal
+
+  inventory:
+    stock_record_id: string
+    sku_code: string
+    location_code: string
+    available_units: integer
+    minimum_stock: integer
+    stock_update_date: string
+
+  suppliers:
+    vendor_code: string
+    vendor_name: string
+    email_address: string
+    contact_number: string
+    city_name: string
+    state_code: string
