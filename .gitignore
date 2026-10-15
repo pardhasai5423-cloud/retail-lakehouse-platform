@@ -1,0 +1,29 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Generated datasets and Spark output
+data/bronze/
+data/silver/
+data/gold/
+data/delta_smoke_test/
+data/source/
+
+# Spark and temporary files
+spark-warehouse/
+metastore_db/
+derby.log
+tmp/
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
