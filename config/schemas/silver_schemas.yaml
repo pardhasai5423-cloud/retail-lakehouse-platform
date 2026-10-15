@@ -1,0 +1,153 @@
+
+# Enterprise Retail Lakehouse
+# Canonical Silver Layer Schemas
+
+customers:
+  columns:
+    - source_system
+    - source_customer_id
+    - customer_key
+    - first_name
+    - last_name
+    - email
+    - phone
+    - city
+    - state
+    - registration_date
+    - ingestion_timestamp
+
+  types:
+    source_system: string
+    source_customer_id: string
+    customer_key: string
+    first_name: string
+    last_name: string
+    email: string
+    phone: string
+    city: string
+    state: string
+    registration_date: date
+    ingestion_timestamp: timestamp
+
+products:
+  columns:
+    - source_system
+    - source_product_id
+    - product_key
+    - product_name
+    - category
+    - brand
+    - unit_price
+    - source_supplier_id
+    - created_date
+    - ingestion_timestamp
+
+  types:
+    source_system: string
+    source_product_id: string
+    product_key: string
+    product_name: string
+    category: string
+    brand: string
+    unit_price: decimal(12,2)
+    source_supplier_id: string
+    created_date: date
+    ingestion_timestamp: timestamp
+
+stores:
+  columns:
+    - source_system
+    - source_store_id
+    - store_key
+    - store_name
+    - city
+    - state
+    - zip_code
+    - opened_date
+    - ingestion_timestamp
+
+  types:
+    source_system: string
+    source_store_id: string
+    store_key: string
+    store_name: string
+    city: string
+    state: string
+    zip_code: string
+    opened_date: date
+    ingestion_timestamp: timestamp
+
+sales:
+  columns:
+    - source_system
+    - source_transaction_id
+    - transaction_key
+    - source_customer_id
+    - source_product_id
+    - source_store_id
+    - transaction_date
+    - quantity
+    - unit_price
+    - discount_amount
+    - total_amount
+    - ingestion_timestamp
+
+  types:
+    source_system: string
+    source_transaction_id: string
+    transaction_key: string
+    source_customer_id: string
+    source_product_id: string
+    source_store_id: string
+    transaction_date: date
+    quantity: integer
+    unit_price: decimal(12,2)
+    discount_amount: decimal(12,2)
+    total_amount: decimal(14,2)
+    ingestion_timestamp: timestamp
+
+inventory:
+  columns:
+    - source_system
+    - source_inventory_id
+    - inventory_key
+    - source_product_id
+    - source_store_id
+    - stock_quantity
+    - reorder_level
+    - last_updated
+    - ingestion_timestamp
+
+  types:
+    source_system: string
+    source_inventory_id: string
+    inventory_key: string
+    source_product_id: string
+    source_store_id: string
+    stock_quantity: integer
+    reorder_level: integer
+    last_updated: date
+    ingestion_timestamp: timestamp
+
+suppliers:
+  columns:
+    - source_system
+    - source_supplier_id
+    - supplier_key
+    - supplier_name
+    - contact_email
+    - phone
+    - city
+    - state
+    - ingestion_timestamp
+
+  types:
+    source_system: string
+    source_supplier_id: string
+    supplier_key: string
+    supplier_name: string
+    contact_email: string
+    phone: string
+    city: string
+    state: string
+    ingestion_timestamp: timestamp
