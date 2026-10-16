@@ -15,6 +15,7 @@ data/silver/
 data/gold/
 data/delta_smoke_test/
 data/source/
+data/powerbi/
 
 # Spark and temporary files
 spark-warehouse/
