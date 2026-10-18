@@ -32,3 +32,6 @@ Thumbs.db
 # Intentionally corrupted source datasets
 data/source_dirty/
 data/quality_injection_report.json
+
+# Pipeline orchestration runtime logs
+logs/
