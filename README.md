@@ -61,3 +61,5 @@ Gold datasets are designed for downstream reporting and Power BI integration. Th
 - Natural-language analytics
 - Additional automated testing and monitoring
 - CI/CD automation
+
+CI trigger verification: Jenkins Poll SCM.
