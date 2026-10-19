@@ -15,6 +15,17 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = PROJECT_ROOT / "logs" / "pipeline"
 
+from src.config.settings import require_safe_write_environment
+
+
+def validate_execution_environment():
+    """Apply the same strict validation used by data writers."""
+    try:
+        require_safe_write_environment()
+    except RuntimeError as exc:
+        raise ValueError(str(exc)) from exc
+
+
 PIPELINE = {
     "bronze": [
         "src/bronze/ingest_bronze_s3.py",
@@ -78,6 +89,18 @@ def execute_script(script_path, run_id):
     env = os.environ.copy()
     env.setdefault("AWS_PROFILE", "retail-lakehouse")
     env["PIPELINE_RUN_ID"] = run_id
+
+    # Allow pipeline scripts to import shared project modules.
+    existing_pythonpath = env.get("PYTHONPATH", "")
+
+    env["PYTHONPATH"] = os.pathsep.join(
+        path
+        for path in [
+            str(PROJECT_ROOT),
+            existing_pythonpath,
+        ]
+        if path
+    )
 
     process = subprocess.Popen(
         [sys.executable, str(absolute_path)],
@@ -271,6 +294,12 @@ def main():
 
     # Safe default: never execute data writes without --execute.
     dry_run = not args.execute
+
+    if not dry_run:
+        try:
+            validate_execution_environment()
+        except ValueError as exc:
+            parser.error(str(exc))
 
     return run_pipeline(args.stages, dry_run)
 

@@ -1,9 +1,11 @@
+from src.config.write_safety import require_new_s3_target
 
 import os
 import sys
 
 from pyspark.sql import functions as F
 from delta.tables import DeltaTable
+from src.config.settings import get_s3_path
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -20,12 +22,11 @@ from clean_suppliers import (
     add_validation_status,
     deduplicate_suppliers,
 )
+from src.config.settings import require_safe_write_environment
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-
-SILVER_SUPPLIERS_PATH = (
-    f"s3a://{BUCKET}/silver/suppliers"
+SILVER_SUPPLIERS_PATH = get_s3_path(
+    "silver", "suppliers"
 )
 
 
@@ -129,10 +130,11 @@ def main():
         # 6. Write the unified Delta table to S3.
         print("\n=== WRITING SILVER SUPPLIERS TO S3 ===")
 
+        require_new_s3_target(spark, SILVER_SUPPLIERS_PATH)
         (
             silver_suppliers.write
             .format("delta")
-            .mode("overwrite")
+            .mode("errorifexists")
             .option("overwriteSchema", "true")
             .save(SILVER_SUPPLIERS_PATH)
         )
@@ -200,4 +202,5 @@ def main():
 
 
 if __name__ == "__main__":
+    require_safe_write_environment()
     main()

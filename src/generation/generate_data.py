@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from faker import Faker
 import pandas as pd
 import random
+from src.config.write_safety import require_new_local_target
 
 fake = Faker("en_US")
 Faker.seed(42)
@@ -302,6 +303,7 @@ def save_dataset(company, name, df):
     folder = OUTPUT / company
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{name}.csv"
+    require_new_local_target(path)
     df.to_csv(path, index=False)
     print(f"Created {path.relative_to(ROOT)}: {len(df):,} rows")
 

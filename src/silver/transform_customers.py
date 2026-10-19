@@ -4,12 +4,18 @@ import os
 from delta import configure_spark_with_delta_pip
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
+from src.config.settings import (
+    get_bucket,
+    get_region,
+    get_aws_profile,
+    get_s3_path,
+)
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-REGION = "us-east-2"
+BUCKET = get_bucket()
+REGION = get_region()
 
-BRONZE_BASE = f"s3a://{BUCKET}/bronze"
+BRONZE_BASE = get_s3_path("bronze")
 
 
 def create_spark():
@@ -17,7 +23,7 @@ def create_spark():
     Create SparkSession with Delta Lake and AWS S3 support.
     """
 
-    os.environ["AWS_PROFILE"] = "retail-lakehouse"
+    os.environ["AWS_PROFILE"] = get_aws_profile()
 
     builder = (
         SparkSession.builder

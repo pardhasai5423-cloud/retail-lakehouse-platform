@@ -16,17 +16,33 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from pyspark.sql import functions as F
+from src.config.settings import (
+    get_bucket,
+    get_aws_profile,
+    get_s3_path,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "silver"))
 
 from transform_customers import create_spark
+from src.config.write_safety import require_new_local_target
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-GOLD_ROOT = f"s3a://{BUCKET}/gold"
+BUCKET = get_bucket()
+GOLD_ROOT = get_s3_path("gold")
+
+LAKEHOUSE_PREFIX = os.getenv(
+    "LAKEHOUSE_PREFIX", ""
+).strip("/")
 
 OUTPUT_DIR = PROJECT_ROOT / "data" / "powerbi"
+
+if LAKEHOUSE_PREFIX:
+    OUTPUT_DIR = OUTPUT_DIR.joinpath(
+        *LAKEHOUSE_PREFIX.split("/")
+    )
+
 
 GOLD_TABLES = {
     "dim_customers": 9000,
@@ -95,6 +111,7 @@ def export_table(spark, table_name, expected_count):
                 f"Source={actual_count}, Export={exported_count}"
             )
 
+        require_new_local_target(output_path)
         os.replace(temporary_path, output_path)
 
     finally:
@@ -123,7 +140,10 @@ def export_table(spark, table_name, expected_count):
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    os.environ.setdefault("AWS_PROFILE", "retail-lakehouse")
+    os.environ.setdefault(
+        "AWS_PROFILE",
+        get_aws_profile()
+    )
 
     print("=" * 65)
     print("GOLD DELTA -> POWER BI CSV EXPORT")
@@ -159,6 +179,7 @@ def main():
         ) as file:
             json.dump(manifest, file, indent=2)
 
+        require_new_local_target(manifest_path)
         os.replace(temporary_manifest, manifest_path)
 
         print(f"\n{'=' * 65}")

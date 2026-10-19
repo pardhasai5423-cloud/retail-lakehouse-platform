@@ -1,10 +1,11 @@
+from src.config.write_safety import require_new_s3_target
 
 import os
 import sys
 
 from pyspark.sql import functions as F
 from delta.tables import DeltaTable
-
+from src.config.settings import get_s3_path
 
 PROJECT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..")
@@ -16,24 +17,23 @@ sys.path.insert(
 )
 
 from transform_customers import create_spark
+from src.config.settings import require_safe_write_environment
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-
-SILVER_STORES_PATH = (
-    f"s3a://{BUCKET}/silver/stores"
+SILVER_STORES_PATH = get_s3_path(
+    "silver", "stores"
 )
 
-SILVER_SALES_PATH = (
-    f"s3a://{BUCKET}/silver/sales"
+SILVER_SALES_PATH = get_s3_path(
+    "silver", "sales"
 )
 
-SILVER_INVENTORY_PATH = (
-    f"s3a://{BUCKET}/silver/inventory"
+SILVER_INVENTORY_PATH = get_s3_path(
+    "silver", "inventory"
 )
 
-GOLD_STORES_PATH = (
-    f"s3a://{BUCKET}/gold/dim_stores"
+GOLD_STORES_PATH = get_s3_path(
+    "gold", "dim_stores"
 )
 
 
@@ -281,10 +281,11 @@ def main():
             "\n=== WRITING GOLD DIM_STORES ==="
         )
 
+        require_new_s3_target(spark, GOLD_STORES_PATH)
         (
             gold_stores.write
             .format("delta")
-            .mode("overwrite")
+            .mode("errorifexists")
             .option("overwriteSchema", "true")
             .save(GOLD_STORES_PATH)
         )
@@ -360,4 +361,5 @@ def main():
 
 
 if __name__ == "__main__":
+    require_safe_write_environment()
     main()

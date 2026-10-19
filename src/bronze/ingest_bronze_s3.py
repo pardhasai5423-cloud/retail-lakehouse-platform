@@ -1,3 +1,4 @@
+from src.config.write_safety import require_new_s3_target
 
 import os
 import uuid
@@ -11,8 +12,16 @@ from pyspark.sql.functions import (
     lit,
 )
 
-BUCKET = "retail-lakehouse-parsam-2026"
-REGION = "us-east-2"
+from src.config.settings import (
+    get_bucket,
+    get_region,
+    get_aws_profile,
+    get_s3_path,
+)
+from src.config.settings import require_safe_write_environment
+
+BUCKET = get_bucket()
+REGION = get_region()
 
 COMPANIES = ["retailmax", "freshmart"]
 
@@ -27,7 +36,7 @@ DATASETS = [
 
 
 def create_spark():
-    os.environ["AWS_PROFILE"] = "retail-lakehouse"
+    os.environ["AWS_PROFILE"] = get_aws_profile()
 
     builder = (
         SparkSession.builder
@@ -69,12 +78,12 @@ def create_spark():
 
 
 def ingest_dataset(spark, company, dataset, batch_id):
-    source_path = (
-        f"s3a://{BUCKET}/raw/{company}/{dataset}.csv"
+    source_path = get_s3_path(
+        "raw", company, f"{dataset}.csv"
     )
 
-    target_path = (
-        f"s3a://{BUCKET}/bronze/{company}/{dataset}"
+    target_path = get_s3_path(
+        "bronze", company, dataset
     )
 
     print(f"\nIngesting {company}.{dataset}")
@@ -100,10 +109,11 @@ def ingest_dataset(spark, company, dataset, batch_id):
         )
     )
 
+    require_new_s3_target(spark, target_path)
     (
         df.write
         .format("delta")
-        .mode("overwrite")
+        .mode("errorifexists")
         .save(target_path)
     )
 
@@ -158,4 +168,5 @@ def main():
 
 
 if __name__ == "__main__":
+    require_safe_write_environment()
     main()

@@ -35,3 +35,6 @@ data/quality_injection_report.json
 
 # Pipeline orchestration runtime logs
 logs/
+
+# Local backups and Python cache
+backups/

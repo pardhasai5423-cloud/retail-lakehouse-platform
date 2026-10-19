@@ -1,9 +1,11 @@
+from src.config.write_safety import require_new_s3_target
 
 import os
 import sys
 
 from pyspark.sql import functions as F
 from delta.tables import DeltaTable
+from src.config.settings import get_s3_path
 
 
 PROJECT_ROOT = os.path.abspath(
@@ -16,18 +18,17 @@ sys.path.insert(
 )
 
 from transform_customers import create_spark
+from src.config.settings import require_safe_write_environment
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-
-SILVER_SALES_PATH = (
-    f"s3a://{BUCKET}/silver/sales"
+SILVER_SALES_PATH = get_s3_path(
+    "silver", "sales"
 )
 
-GOLD_BASE = f"s3a://{BUCKET}/gold"
+GOLD_BASE = get_s3_path("gold")
 
-GOLD_SALES_PATH = (
-    f"{GOLD_BASE}/fact_sales"
+GOLD_SALES_PATH = get_s3_path(
+    "gold", "fact_sales"
 )
 
 EXPECTED_SALES = 88600
@@ -348,10 +349,11 @@ def main():
 
         print("\n=== WRITING GOLD FACT_SALES ===")
 
+        require_new_s3_target(spark, GOLD_SALES_PATH)
         (
             fact_sales.write
             .format("delta")
-            .mode("overwrite")
+            .mode("errorifexists")
             .option("overwriteSchema", "true")
             .save(GOLD_SALES_PATH)
         )
@@ -425,4 +427,5 @@ def main():
 
 
 if __name__ == "__main__":
+    require_safe_write_environment()
     main()

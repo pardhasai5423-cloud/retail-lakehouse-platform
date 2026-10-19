@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import random
 import pandas as pd
+from src.config.write_safety import require_new_local_target
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "data" / "source"
@@ -209,10 +210,12 @@ def main():
 
         for name in DATASETS:
             path = folder / f"{name}.csv"
+            require_new_local_target(path)
             data[company][name].to_csv(path, index=False)
             print(f"Created {path.relative_to(ROOT)}")
 
     REPORT.parent.mkdir(parents=True, exist_ok=True)
+    require_new_local_target(REPORT)
     REPORT.write_text(json.dumps(report, indent=2))
     print(f"\nQuality report: {REPORT.relative_to(ROOT)}")
     print(json.dumps(report, indent=2))

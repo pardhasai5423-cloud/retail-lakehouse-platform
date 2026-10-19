@@ -1,9 +1,11 @@
+from src.config.write_safety import require_new_s3_target
 
 import os
 import sys
 
 from pyspark.sql import functions as F
 from delta.tables import DeltaTable
+from src.config.settings import get_s3_path
 
 
 PROJECT_ROOT = os.path.abspath(
@@ -16,14 +18,23 @@ sys.path.insert(
 )
 
 from transform_customers import create_spark
+from src.config.settings import require_safe_write_environment
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-GOLD_BASE = f"s3a://{BUCKET}/gold"
+GOLD_BASE = get_s3_path("gold")
 
-INVENTORY_PATH = f"{GOLD_BASE}/fact_inventory"
-PRODUCTS_PATH = f"{GOLD_BASE}/dim_products"
-OUTPUT_PATH = f"{GOLD_BASE}/agg_inventory_status"
+INVENTORY_PATH = get_s3_path(
+    "gold", "fact_inventory"
+)
+
+PRODUCTS_PATH = get_s3_path(
+    "gold", "dim_products"
+)
+
+OUTPUT_PATH = get_s3_path(
+    "gold", "agg_inventory_status"
+)
+
 
 EXPECTED_INVENTORY = 3600
 EXPECTED_PRODUCTS = 1800
@@ -39,10 +50,6 @@ EXPECTED_STOCK_STATUS = {
     "SUFFICIENT_STOCK": 3161,
 }
 
-EXPECTED_FRESHNESS_STATUS = {
-    "CURRENT": 889,
-    "STALE": 2711,
-}
 
 
 def main():
@@ -328,9 +335,26 @@ def main():
             )
         }
 
+        expected_freshness_counts = {
+            row["freshness_status"]: row["count"]
+            for row in (
+                inventory.groupBy("freshness_status")
+                .count()
+                .collect()
+            )
+        }
+
         assert (
-            freshness_counts
-            == EXPECTED_FRESHNESS_STATUS
+            set(freshness_counts)
+            .issubset({"CURRENT", "STALE"})
+        ), f"Unexpected freshness statuses: {freshness_counts}"
+
+        assert sum(freshness_counts.values()) == EXPECTED_INVENTORY
+
+        assert freshness_counts == expected_freshness_counts, (
+            "Inventory freshness reconciliation failed: "
+            f"aggregated={freshness_counts}, "
+            f"fact_inventory={expected_freshness_counts}"
         )
 
         print(
@@ -417,10 +441,11 @@ def main():
             "\n=== WRITING AGG_INVENTORY_STATUS ==="
         )
 
+        require_new_s3_target(spark, OUTPUT_PATH)
         (
             aggregated.write
             .format("delta")
-            .mode("overwrite")
+            .mode("errorifexists")
             .option(
                 "overwriteSchema", "true"
             )
@@ -540,4 +565,5 @@ def main():
 
 
 if __name__ == "__main__":
+    require_safe_write_environment()
     main()

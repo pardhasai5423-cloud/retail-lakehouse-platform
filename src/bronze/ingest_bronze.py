@@ -8,6 +8,7 @@ from pyspark.sql.functions import (
     lit,
 )
 from delta import configure_spark_with_delta_pip
+from src.config.write_safety import require_new_local_target
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -76,7 +77,9 @@ def ingest_dataset(spark, company, dataset):
         .withColumn("_ingestion_timestamp", current_timestamp())
     )
 
-    # Overwrite for repeatable local development.
+    require_new_local_target(target_path)
+
+    # Write only to a new local Delta target.
     (
         bronze_df.write
         .format("delta")

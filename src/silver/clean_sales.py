@@ -4,6 +4,7 @@ import sys
 
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
+from src.config.settings import get_s3_path
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -18,8 +19,7 @@ from transform_sales import (
 )
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-SILVER_BASE = f"s3a://{BUCKET}/silver"
+SILVER_BASE = get_s3_path("silver")
 
 
 def clean_identifiers(df):

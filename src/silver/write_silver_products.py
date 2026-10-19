@@ -1,9 +1,11 @@
+from src.config.write_safety import require_new_s3_target
 
 import os
 import sys
 
 from pyspark.sql import functions as F
 from delta.tables import DeltaTable
+from src.config.settings import get_s3_path
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -20,12 +22,11 @@ from clean_products import (
     add_validation_status,
     deduplicate_products,
 )
+from src.config.settings import require_safe_write_environment
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-
-SILVER_PRODUCTS_PATH = (
-    f"s3a://{BUCKET}/silver/products"
+SILVER_PRODUCTS_PATH = get_s3_path(
+    "silver", "products"
 )
 
 
@@ -122,10 +123,11 @@ def main():
         # 6. Persist the Silver Delta table to AWS S3.
         print("\n=== WRITING SILVER PRODUCTS TO S3 ===")
 
+        require_new_s3_target(spark, SILVER_PRODUCTS_PATH)
         (
             silver_products.write
             .format("delta")
-            .mode("overwrite")
+            .mode("errorifexists")
             .option("overwriteSchema", "true")
             .save(SILVER_PRODUCTS_PATH)
         )
@@ -191,4 +193,5 @@ def main():
 
 
 if __name__ == "__main__":
+    require_safe_write_environment()
     main()

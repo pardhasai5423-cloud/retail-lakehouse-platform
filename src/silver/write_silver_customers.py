@@ -1,8 +1,10 @@
+from src.config.write_safety import require_new_s3_target
 
 import os
 import sys
 
 from pyspark.sql import functions as F
+from src.config.settings import get_s3_path
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -17,12 +19,11 @@ from clean_customers import (
     clean_blank_values,
     deduplicate_customers,
 )
+from src.config.settings import require_safe_write_environment
 
 
-BUCKET = "retail-lakehouse-parsam-2026"
-
-SILVER_CUSTOMERS_PATH = (
-    f"s3a://{BUCKET}/silver/customers"
+SILVER_CUSTOMERS_PATH = get_s3_path(
+    "silver", "customers"
 )
 
 
@@ -109,10 +110,11 @@ def main():
         # Step 8: Write the Silver Delta table.
         print("\n=== WRITING SILVER CUSTOMERS TO S3 ===")
 
+        require_new_s3_target(spark, SILVER_CUSTOMERS_PATH)
         (
             silver_customers.write
             .format("delta")
-            .mode("overwrite")
+            .mode("errorifexists")
             .option("overwriteSchema", "true")
             .save(SILVER_CUSTOMERS_PATH)
         )
@@ -157,4 +159,5 @@ def main():
 
 
 if __name__ == "__main__":
+    require_safe_write_environment()
     main()
