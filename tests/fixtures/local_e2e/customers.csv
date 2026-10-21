@@ -1,0 +1,3 @@
+customer_id,first_name,last_name,email,phone,city,state,created_at
+C001,Alice,Smith,ALICE@EXAMPLE.COM,5551110001,Fairfax,VA,2026-10-01
+C002,Bob,Jones,bob@example.com,5551110002,Richmond,VA,2026-10-02

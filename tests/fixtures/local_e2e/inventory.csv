@@ -1,0 +1,3 @@
+inventory_id,product_id,store_id,stock_quantity,reorder_level,last_updated
+I001,P001,S001,20,5,2026-10-20
+I002,P002,S002,3,5,2026-10-20

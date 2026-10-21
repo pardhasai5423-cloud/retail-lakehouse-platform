@@ -1,0 +1,3 @@
+product_id,product_name,category,brand,unit_price,supplier_id,created_at
+P001,Milk,Grocery,RetailMax,12.50,SUP001,2026-10-01
+P002,Coffee,Beverages,RetailMax,30.00,SUP001,2026-10-01
