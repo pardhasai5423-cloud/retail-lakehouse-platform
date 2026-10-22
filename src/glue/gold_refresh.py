@@ -88,7 +88,7 @@ def build_incremental_date_dimension(spark, silver_base):
     if bounds["start_date"] is None:
         raise ValueError("No valid Silver dates available")
 
-    from src.gold.build_dim_date import build_date_dimension
+    from src.glue.date_dimension import build_date_dimension
 
     return build_date_dimension(
         spark,

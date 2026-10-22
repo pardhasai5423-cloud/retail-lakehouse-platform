@@ -16,7 +16,7 @@ DATASETS = frozenset({
 })
 
 FILE_PATTERN = re.compile(
-    r"^incoming/"
+    r"^(?:incoming/|test-runs/glue-incremental-v1/raw/)"
     r"(retailmax|freshmart)/"
     r"(customers|products|stores|sales|inventory|suppliers)/"
     r"([A-Za-z0-9][A-Za-z0-9_-]*\.csv)$"
