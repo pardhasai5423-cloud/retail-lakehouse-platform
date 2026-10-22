@@ -25,6 +25,76 @@ DATASETS = (
 )
 
 
+
+def execute_local_gold_pipeline(
+    spark, changed_datasets, silver_base, gold_base, *, allow_writes=False
+):
+    """Execute real Gold transformations only in isolated pytest directories."""
+    from src.glue.gold_planner import plan_gold_refresh
+    from src.glue.gold_refresh import (
+        execute_date_refresh,
+        validate_gold_target,
+    )
+    from src.glue.jobs import gold_orchestrator
+    from src.glue.jobs.gold_execution import execute_gold_table
+    from src.glue.jobs.gold_orchestrator import (
+        DATE_TABLE,
+        AGGREGATE_TABLES,
+        DIRECT_TABLES,
+    )
+
+    silver = Path(silver_base)
+    gold = Path(gold_base)
+
+    if (
+        not silver.is_absolute()
+        or not gold.is_absolute()
+        or silver.is_symlink()
+        or gold.is_symlink()
+        or silver.name != "silver"
+        or gold.name != "gold"
+        or silver.parent.resolve() != gold.parent.resolve()
+        or not silver.parent.resolve().is_relative_to(
+            Path("/tmp").resolve()
+        )
+    ):
+        raise ValueError("Local Gold execution requires isolated /tmp paths")
+
+    tables = tuple(plan_gold_refresh(changed_datasets))
+
+    for table in tables:
+        validate_gold_target(str(gold / table))
+
+    results = []
+
+    for table in tables:
+        if table == DATE_TABLE:
+            result = execute_date_refresh(
+                spark, str(silver), str(gold),
+                allow_writes=allow_writes,
+            )
+        elif table in AGGREGATE_TABLES:
+            result = gold_orchestrator.execute_aggregate_refresh(
+                spark, table, str(gold),
+                allow_writes=allow_writes,
+            )
+        elif table in DIRECT_TABLES:
+            result = execute_gold_table(
+                spark, table, str(silver), str(gold),
+                allow_writes=allow_writes,
+            )
+        else:
+            raise ValueError(f"Unsupported Gold table: {table}")
+
+        results.append(result)
+
+    return {
+        "status": "completed" if allow_writes else "dry_run",
+        "tables": tables,
+        "results": results,
+    }
+
+
 @pytest.fixture(scope="module")
 def spark():
     builder = (
@@ -152,7 +222,7 @@ def test_real_bronze_to_silver_pipeline(spark, tmp_path, monkeypatch):
     # Execute the real Gold refresh using local Silver Delta tables.
     gold_base = tmp_path / "gold"
 
-    gold_result = execute_gold_pipeline(
+    gold_result = execute_local_gold_pipeline(
         spark,
         DATASETS,
         str(silver_base),
@@ -219,7 +289,7 @@ def test_real_bronze_to_silver_pipeline(spark, tmp_path, monkeypatch):
     assert silver_sales_after.count() == 2
 
     # Refresh Gold using the same unchanged Silver sales data.
-    replay_gold = execute_gold_pipeline(
+    replay_gold = execute_local_gold_pipeline(
         spark,
         ["sales"],
         str(silver_base),
@@ -391,7 +461,7 @@ def test_real_coordinator_with_local_delta(spark, tmp_path, monkeypatch):
 
         def gold_with_first_attempt_failure(*a, **kw):
             gold_attempts["count"] += 1
-            return real_gold_pipeline(*a, **kw)
+            return execute_local_gold_pipeline(*a, **kw)
 
         with (
             patch(

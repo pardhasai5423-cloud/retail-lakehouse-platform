@@ -11,6 +11,15 @@ from src.glue.gold_refresh import (
 )
 from src.glue.jobs.gold_execution import execute_gold_table
 
+from src.pipeline.gold_safety import (
+    GOLD_BASE,
+    get_gold_target,
+    validate_isolated_gold_target,
+    require_gold_write_approval,
+)
+from src.pipeline.safety import pipeline_path
+
+
 
 AGGREGATE_TABLES = frozenset({
     "agg_daily_sales",
@@ -34,7 +43,20 @@ def plan_gold_pipeline(changed_datasets, silver_base, gold_base):
     if not isinstance(gold_base, str) or not gold_base.strip():
         raise ValueError("Gold base path is required")
 
+    expected_silver = pipeline_path("silver")
+    expected_gold = GOLD_BASE
+
+    if silver_base.rstrip("/") != expected_silver:
+        raise ValueError("Silver source must use the isolated prefix")
+
+    if gold_base.rstrip("/") != expected_gold:
+        raise ValueError("Gold destination must use the isolated prefix")
+
     tables = tuple(plan_gold_refresh(changed_datasets))
+
+    for table in tables:
+        target = get_gold_target(table)
+        validate_isolated_gold_target(target)
 
     for table in tables:
         validate_gold_target(
@@ -63,6 +85,16 @@ def execute_gold_pipeline(
     plan = plan_gold_pipeline(
         changed_datasets, silver_base, gold_base
     )
+
+    if not isinstance(allow_writes, bool):
+        raise ValueError("allow_writes must be a boolean")
+
+    if allow_writes:
+        for table in plan["tables"]:
+            require_gold_write_approval(
+                get_gold_target(table),
+                allow_writes=True,
+            )
 
     results = []
 

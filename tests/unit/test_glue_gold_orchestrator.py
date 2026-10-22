@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.glue.gold_planner import GOLD_ORDER
+from src.pipeline.safety import pipeline_path
 from src.glue.jobs.gold_orchestrator import (
     plan_gold_pipeline,
     execute_gold_pipeline,
@@ -29,7 +30,7 @@ def test_all_datasets_plan_in_dependency_order():
     ]
 
     plan = plan_gold_pipeline(
-        datasets, "/tmp/silver", "/tmp/gold"
+        datasets, pipeline_path("silver"), pipeline_path("gold")
     )
 
     assert tuple(plan["tables"]) == tuple(GOLD_ORDER)
@@ -41,8 +42,8 @@ def test_dry_run_performs_no_spark_reads():
     result = execute_gold_pipeline(
         spark,
         ["sales"],
-        "/tmp/silver",
-        "/tmp/gold",
+        pipeline_path("silver"),
+        pipeline_path("gold"),
     )
 
     assert result["status"] == "dry_run"
@@ -50,11 +51,11 @@ def test_dry_run_performs_no_spark_reads():
 
 
 def test_protected_original_dataset_rejected():
-    with pytest.raises(ValueError, match="Protected"):
+    with pytest.raises(ValueError, match="Gold destination must use the isolated prefix"):
         plan_gold_pipeline(
             ["sales"],
-            "/tmp/silver",
-            "s3://bucket/test-runs/run-001/gold",
+            pipeline_path("silver"),
+            pipeline_path("gold").replace("glue-incremental-v1", "run-001"),
         )
 
 
@@ -64,7 +65,7 @@ def test_empty_changes_rejected():
         match="At least one changed dataset",
     ):
         plan_gold_pipeline(
-            [], "/tmp/silver", "/tmp/gold"
+            [], pipeline_path("silver"), pipeline_path("gold")
         )
 
 
@@ -90,8 +91,8 @@ def test_all_execution_types_dispatched():
                 "customers", "products", "suppliers",
                 "stores", "sales", "inventory",
             ],
-            "/tmp/silver",
-            "/tmp/gold",
+            pipeline_path("silver"),
+            pipeline_path("gold"),
             allow_writes=True,
         )
 
@@ -103,7 +104,7 @@ def test_all_execution_types_dispatched():
 
 def test_sales_aggregations_follow_fact_sales():
     plan = plan_gold_pipeline(
-        ["sales"], "/tmp/silver", "/tmp/gold"
+        ["sales"], pipeline_path("silver"), pipeline_path("gold")
     )
 
     tables = plan["tables"]

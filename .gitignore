@@ -38,3 +38,10 @@ logs/
 
 # Local backups and Python cache
 backups/
+
+# Generated deployment packages
+dist/
+
+# Temporary backup files
+*.bak
+*.backup

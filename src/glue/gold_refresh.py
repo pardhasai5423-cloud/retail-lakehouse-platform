@@ -19,7 +19,7 @@ PROTECTED_PREFIX = "test-runs/run-001"
 
 
 def validate_gold_target(path):
-    """Reject unsafe or unexpected Gold destinations."""
+    """Validate isolated S3 Gold paths and safe local test paths."""
     if not isinstance(path, str) or not path.strip():
         raise ValueError("Gold target path is required")
 
@@ -40,12 +40,34 @@ def validate_gold_target(path):
         parts[i:i + 2] == ["test-runs", "run-001"]
         for i in range(len(parts) - 1)
     ):
-        raise ValueError("Protected original dataset cannot be modified")
+        raise ValueError(
+            "Protected original dataset cannot be modified"
+        )
 
     if not parts or parts[-2:-1] != ["gold"]:
         raise ValueError(
             "Gold target must be inside a gold/<table> directory"
         )
+
+    if parsed.scheme in ("s3", "s3a"):
+        from src.pipeline.gold_safety import (
+            APPROVED_GOLD_TARGETS,
+        )
+
+        canonical = (
+            f"s3a://{parsed.netloc}{parsed.path}"
+        )
+
+        if (
+            parsed.params
+            or parsed.query
+            or parsed.fragment
+            or canonical not in APPROVED_GOLD_TARGETS
+        ):
+            raise ValueError(
+                "S3 Gold destination is outside the approved "
+                "isolated prefix or table allowlist"
+            )
 
     return path
 

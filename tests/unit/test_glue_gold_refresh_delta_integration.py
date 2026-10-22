@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
-from delta import configure_spark_with_delta_pip
+from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql import types as T
 
@@ -32,9 +32,17 @@ def spark():
         .config("spark.sql.shuffle.partitions", "2")
     )
 
-    session = configure_spark_with_delta_pip(
+    session = (
         builder
-    ).getOrCreate()
+        .config(
+            "spark.jars",
+            ",".join([
+                str(Path.home() / ".ivy2" / "jars" / "io.delta_delta-spark_2.12-3.3.2.jar"),
+                str(Path.home() / ".ivy2" / "jars" / "io.delta_delta-storage-3.3.2.jar"),
+            ]),
+        )
+        .getOrCreate()
+    )
 
     session.sparkContext.setLogLevel("ERROR")
     yield session

@@ -60,3 +60,43 @@ def plan_batch(source_key: str) -> BatchPlan:
         batch_id=f"batch-{digest}",
         bronze_table=f"bronze/{company}/{dataset}",
     )
+
+
+def plan_run_batch(source_key: str, run_config) -> BatchPlan:
+    """Plan a CSV source strictly inside a validated new run."""
+    from src.pipeline.run_config import RunConfig
+
+    if not isinstance(run_config, RunConfig):
+        raise TypeError("A validated RunConfig is required")
+
+    if not isinstance(source_key, str):
+        raise ValueError("Source key must be a string")
+
+    pattern = re.compile(
+        rf"^{re.escape(run_config.prefix)}/raw/"
+        r"(retailmax|freshmart)/"
+        r"(customers|products|stores|sales|inventory|suppliers)/"
+        r"([A-Za-z0-9][A-Za-z0-9_-]*\.csv)$"
+    )
+
+    match = pattern.fullmatch(source_key)
+
+    if match is None:
+        raise ValueError(
+            f"Source key is outside the approved run: {source_key!r}"
+        )
+
+    company, dataset, filename = match.groups()
+
+    digest = hashlib.sha256(
+        source_key.encode("utf-8")
+    ).hexdigest()[:16]
+
+    return BatchPlan(
+        source_key=source_key,
+        company=company,
+        dataset=dataset,
+        filename=filename,
+        batch_id=f"batch-{digest}",
+        bronze_table=f"bronze/{company}/{dataset}",
+    )
