@@ -3,8 +3,11 @@
 ### Post-Merger Data Consolidation — RetailMax Acquires FreshMart
 
 **Stack:** Python · PySpark 3.5.6 · Delta Lake · Amazon S3 · AWS Glue-oriented ETL · Jenkins CI · GitHub · Power BI
+
 **Domain:** Retail Data Engineering and Business Analytics
+
 **Project type:** Portfolio case study using fictional companies and synthetic operational data
+
 **Implementation status:** Complete and validated local Bronze → Silver → Gold execution; Power BI reporting and Jenkins CI completed. AWS Glue cloud execution not demonstrated.
 
 ## 1. Executive Summary
