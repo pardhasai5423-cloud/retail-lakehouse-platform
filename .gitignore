@@ -45,3 +45,10 @@ dist/
 # Temporary backup files
 *.bak
 *.backup
+
+# Local end-to-end pipeline execution outputs
+local_runs/
+
+# README backups
+README.pre-final-update.md
+README.backup-*.md
